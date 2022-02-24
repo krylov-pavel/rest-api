@@ -2,6 +2,16 @@ import Vue from 'https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.esm.browser.js
 
 console.log(Vue)
 
+Vue.component('loader', {
+    template: `
+        <div class="d-flex align-items-center justify-content-center">
+            <div class="spinner-border" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+        `
+})
+
 new Vue({
     el: '#app',
     data() {
@@ -22,32 +32,28 @@ new Vue({
     methods: {
         async createContact() {
             const {...contact} = this.form
+            const newContact = await request('/api/contacts', 'POST', contact)
 
-            // const newContact = await request('/api/contacts', 'POST', contact)
-
-
-            // this.contacts.push(newContact)
-            this.contacts.push({id: Date.now(), marked: false, ...contact})
-
+            this.contacts.push(newContact)
             this.form.name = this.form.value = ''
         },
         async markContact(id) {
             const contact = this.contacts.find(c => c.id === id)
-            // const updated = await request(`/api/contacts/${id}`, 'PUT', {
-            //     ...contact,
-            //     marked: true
-            // })
-            // contact.marked = updated.marked
-            contact.marked = true
+            const updated = await request(`/api/contacts/${id}`, 'PUT', {
+                ...contact,
+                marked: true
+            })
+            contact.marked = updated.marked
         },
         async removeContact(id) {
-            // await request(`/api/contacts/${id}`, 'DELETE')
+            const {message} = await request(`/api/contacts/${id}`, 'DELETE')
+            console.log(message)
             this.contacts = this.contacts.filter(c => c.id !== id)
         }
     },
     async mounted() {
         this.loading = true
-        // this.contacts = await request('/api/contacts')
+        this.contacts = await request('/api/contacts')
         this.loading = false
     }
 })
